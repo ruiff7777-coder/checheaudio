@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>车车代表作</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('bg.jpg') center / cover no-repeat fixed;
+  filter: brightness(0.92) saturate(1.3);
+  z-index: -1;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(11,26,46,0.30) 0%, rgba(11,26,46,0.10) 100%);
+  z-index: -1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.header .logo svg {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+
+.header h1 {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  background: linear-gradient(135deg, #ffe066, #ffb347, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 12px rgba(255,180,50,0.2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  max-width: 740px;
+  width: 100%;
+}
+
+.card {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  padding: 20px 16px 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.30);
+  transform: translateY(-2px);
+}
+
+.card.playing {
+  border-color: rgba(52,199,89,0.55);
+  background: rgba(255,255,255,0.16);
+  box-shadow: 0 8px 28px rgba(52,199,89,0.22);
+}
+
+.card .number {
+  font-size: 11px;
+  color: rgba(255,255,255,0.40);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.card .title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* --- Character icon (standalone, no toggle track) --- */
+.icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.icon-wrap .char-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+  transition: filter 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.card.playing .char-img {
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)) drop-shadow(0 0 12px rgba(52,199,89,0.4));
+}
+
+/* --- Leaf elements --- */
+.leaf {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card.playing .leaf {
+  animation: leafGrow 0.9s ease-out forwards;
+}
+
+.card.playing .leaf:nth-child(2) { animation-delay: 0.12s; }
+.card.playing .leaf:nth-child(3) { animation-delay: 0.28s; }
+.card.playing .leaf:nth-child(4) { animation-delay: 0.08s; }
+.card.playing .leaf:nth-child(5) { animation-delay: 0.22s; }
+.card.playing .leaf:nth-child(6) { animation-delay: 0.35s; }
+
+@keyframes leafGrow {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5) rotate(var(--rot, 30deg));
+  }
+}
+
+.leaf svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.progress-bar {
+  margin-top: 10px;
+  height: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card.playing .progress-bar {
+  opacity: 1;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #34c759, #30d158);
+  border-radius: 2px;
+  transition: width 0.3s linear;
+}
+
+.card .time {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card.playing .time {
+  opacity: 1;
+}
+
+audio { display: none; }
+
+@media (max-width: 640px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .card { padding: 18px 14px 14px; }
+  .card .title { font-size: 15px; }
+  body { padding: 28px 16px; }
+  .header h1 { font-size: 26px; }
+  .header .logo svg { width: 28px; height: 28px; }
+}
+
+@media (max-width: 400px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 22 L6 18 Q6 16 8 16 L10 16 L12 12 Q13 10 15 10 L25 10 Q27 10 28 12 L30 16 L32 16 Q34 16 34 18 L32 22" 
+            fill="url(#carGrad)" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/>
+      <path d="M14 13 L17 13 L17 16 L13 16 Z" fill="rgba(255,255,255,0.25)"/>
+      <path d="M18 13 L22 13 L22 16 L18 16 Z" fill="rgba(255,255,255,0.25)"/>
+      <path d="M23 13 L26 13 L27 16 L23 16 Z" fill="rgba(255,255,255,0.25)"/>
+      <circle cx="12" cy="23" r="3" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="0.8"/>
+      <circle cx="28" cy="23" r="3" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="0.8"/>
+      <defs>
+        <linearGradient id="carGrad" x1="6" y1="10" x2="34" y2="24">
+          <stop offset="0%" stop-color="#ffd700"/>
+          <stop offset="100%" stop-color="#ff8c00"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <h1>车车代表作</h1>
+  </div>
+</div>
+
+<div class="grid" id="app"></div>
+
+<script>
+// Leaf SVG
+const LEAF_SVG = `
+<svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+  <path d="M7 14 Q1 9 2 3 Q3 1 7 2 Q11 1 12 3 Q13 9 7 14Z" fill="#4cd964" opacity="0.7"/>
+  <path d="M7 2 L7 9" stroke="#2c8a4a" stroke-width="0.6" opacity="0.5"/>
+</svg>`;
+
+const songs = [
+  { num: 'Ⅰ', title: '好想谈恋爱', src: 'audio/好想谈恋爱.m4a' },
+  { num: 'Ⅱ', title: '明知故问',   src: 'audio/明知故问.m4a' },
+  { num: 'Ⅲ', title: '让她降落',   src: 'audio/让她降落.m4a' },
+  { num: 'Ⅳ', title: '一个人跳舞', src: 'audio/一个人跳舞.m4a' },
+  { num: 'Ⅴ', title: '原谅',       src: 'audio/原谅.m4a' },
+  { num: 'Ⅵ', title: '在夜里跳舞', src: 'audio/在夜里跳舞.m4a' },
+];
+
+let currentAudio = null;
+let currentCard = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function createCard(song) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="number">${song.num}</div>
+    <div class="title">${song.title}</div>
+    <div class="icon-wrap">
+      <img class="char-img" src="character.jpg" alt="">
+      <div class="leaf" style="top:-12px;left:-4px">${LEAF_SVG}</div>
+      <div class="leaf" style="top:-14px;left:10px">${LEAF_SVG}</div>
+      <div class="leaf" style="top:-10px;left:26px">${LEAF_SVG}</div>
+      <div class="leaf" style="top:8px;left:-10px">${LEAF_SVG}</div>
+      <div class="leaf" style="top:14px;left:28px">${LEAF_SVG}</div>
+      <div class="leaf" style="top:-4px;left:-16px">${LEAF_SVG}</div>
+    </div>
+    <div class="progress-bar"><div class="fill"></div></div>
+    <div class="time">0:00</div>
+  `;
+
+  const audio = new Audio(song.src);
+  audio.preload = 'none';
+  audio.controls = false;
+
+  const fill = card.querySelector('.fill');
+  const timeEl = card.querySelector('.time');
+
+  function stopCurrent() {
+    if (currentAudio && currentAudio !== audio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      if (currentCard) {
+        currentCard.classList.remove('playing');
+      }
+    }
+  }
+
+  audio.addEventListener('timeupdate', () => {
+    const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
+    fill.style.width = pct + '%';
+    timeEl.textContent = formatTime(audio.currentTime);
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    timeEl.textContent = '0:00 / ' + formatTime(audio.duration);
+  });
+
+  audio.addEventListener('ended', () => {
+    card.classList.remove('playing');
+    currentAudio = null;
+    currentCard = null;
+  });
+
+  card.addEventListener('click', () => {
+    if (card.classList.contains('playing')) {
+      audio.pause();
+      card.classList.remove('playing');
+      currentAudio = null;
+      currentCard = null;
+    } else {
+      stopCurrent();
+      audio.play().then(() => {
+        card.classList.add('playing');
+        currentAudio = audio;
+        currentCard = card;
+      }).catch(e => {
+        if (e.name !== 'AbortError') console.warn(e);
+      });
+    }
+  });
+
+  return card;
+}
+
+songs.forEach(s => document.getElementById('app').appendChild(createCard(s)));
+</script>
+</body>
+</html>
